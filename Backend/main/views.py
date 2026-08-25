@@ -38,7 +38,7 @@ def form(request):
         with open(JSON_DIR, "w") as f:
             json.dump(file_data, f, indent=4)
     
-    return HttpResponse("Form submitted successfully!")
+    return HttpResponse(f"Form submitted successfully! - {file_data.items()}")
 
         
 
