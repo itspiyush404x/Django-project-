@@ -8,3 +8,4 @@ urlpatterns = [
     path("form/update/<str:id_>/", views.update_form),
     path("form/delete/<str:id_>/", views.delete_form)
 ]
+

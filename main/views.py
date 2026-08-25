@@ -7,6 +7,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 JSON_DIR = BASE_DIR / "data.json"
+print(JSON_DIR)
     
 
 
@@ -45,13 +46,14 @@ def submit_form(request):
         json.dump(file_data, f, indent=4)
 
     return HttpResponse(f"Form submitted successfully! - {file_data.items()}")
-    
-
 
 
 @csrf_exempt
 def update_form(request,id_):
     file_data = load_Json_data()
+    if id_ not in file_data:
+        return HttpResponse(f"ERROR: Id-{id_} not found")
+
     if request.method in ("PUT", "PATCH"):
         if request.method == "PUT":
             file_data.update({id_:json.loads(request.body)})
@@ -66,17 +68,18 @@ def update_form(request,id_):
         return HttpResponse(f"Form updated successfully! - {file_data.items()}")
 
 
-
-
 @csrf_exempt
 def delete_form(request,id_):
     file_data = load_Json_data()
+    if id_ not in file_data:
+        return HttpResponse(f"ERROR: Id-{id_} not found")
+
 
     del file_data[id_]
 
     with open(JSON_DIR, "w") as f:
             json.dump(file_data, f, indent=4)
-            
+
     return HttpResponse(f"Form deleted successfully! - {file_data.items()}")
 
         
