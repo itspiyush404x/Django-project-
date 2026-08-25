@@ -2,7 +2,10 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from pathlib import Path
 
+
+BASE_DIR = Path(__file__).resolve().parent
 
 
 # Create your views here.
@@ -22,8 +25,9 @@ def hello_jatin(request):
 @csrf_exempt
 def form(request):
     if request.method == "POST":
+        JSON_DIR = BASE_DIR / "data.json"
         try:
-            with open(r"C:\Users\C C\OneDrive\Desktop\coaching projects\projects\first_django_project\Backend\main\data.json", "r") as f:
+            with open(JSON_DIR, "r") as f:
                 file_data = json.load(f)
         except json.JSONDecodeError:
             file_data = {}
@@ -31,7 +35,7 @@ def form(request):
         index = max([int(i) for i in file_data]) + 1
         file_data.update({str(index):json.loads(request.body)})
 
-        with open(r"C:\Users\C C\OneDrive\Desktop\coaching projects\projects\first_django_project\Backend\main\data.json", "w") as f:
+        with open(JSON_DIR, "w") as f:
             json.dump(file_data, f, indent=4)
     
     return HttpResponse("Form submitted successfully!")
