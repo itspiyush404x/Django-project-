@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from pathlib import Path
@@ -34,53 +34,82 @@ def load_Json_data():
 
 @csrf_exempt
 def submit_form(request):
-    file_data = load_Json_data()
-    if file_data:
-        id_ = max([int(i) for i in file_data]) + 1
+    if request.method == "POST":
+        file_data = load_Json_data()
+        data = json.loads(request.body)
+        # check json format amd missing parameters
+        for key in ("name", "age", "email"):
+            if key not in data or not data[key] and len(data)!=3:
+                return JsonResponse({"error":"Invalid Json"}, status=422)
+            else: # check for incorrect email
+                if "@" not in data["email"]:
+                    return JsonResponse({"error":"Invalid Email"}, status=422)
+        # checks for duplicate email
+        for form in file_data.values():
+            if form["email"] == data["email"]:
+                return JsonResponse({"error":"User Already Exist"}, status=422)
+
+        if file_data:
+            id_ = max([int(i) for i in file_data]) + 1
+        else:
+            id_ = 1
+        
+        file_data.update({str(id_):data})
+
+        with open(JSON_DIR, "w") as f:
+            json.dump(file_data, f, indent=4)
+
+        return JsonResponse(file_data, status=201)
     else:
-        id_ = 1
-    
-    file_data.update({str(id_):json.loads(request.body)})
-
-    with open(JSON_DIR, "w") as f:
-        json.dump(file_data, f, indent=4)
-
-    return HttpResponse(f"Form submitted successfully! - {file_data.items()}")
-
+        return JsonResponse({"error":"Method Not Allowed"}, status=405)
 
 @csrf_exempt
 def update_form(request,id_):
-    file_data = load_Json_data()
-    if id_ not in file_data:
-        return HttpResponse(f"ERROR: Id-{id_} not found")
-
     if request.method in ("PUT", "PATCH"):
+        file_data = load_Json_data()
+        if id_ not in file_data:
+            return JsonResponse({"error":"ID not found"}, status=404)
+
         if request.method == "PUT":
-            file_data.update({id_:json.loads(request.body)})
+            data = json.loads(request.body)
+            if len(data)!=3:
+                return JsonResponse({"error":"Invalid Json"}, status=422)
+            for key in ("name", "age", "email"):
+                if key not in data:
+                    if data[key]:
+                        return JsonResponse({"error":"Invalid Json"}, status=422)
+
+            file_data.update({id_:data})
             
         elif request.method == "PATCH":
             data = json.loads(request.body)
             for key in data:
+                if key not in ("name", "age", "email"):
+                    return JsonResponse({"error":"Invalid Json"}, status=422) 
                 file_data[id_].update({key:data[key]})
 
         with open(JSON_DIR, "w") as f:
             json.dump(file_data, f, indent=4)
-        return HttpResponse(f"Form updated successfully! - {file_data.items()}")
-
+        return JsonResponse(file_data, status=200)
+    else:
+        return JsonResponse({"error":"Method Not Allowed"}, status=405)
 
 @csrf_exempt
 def delete_form(request,id_):
-    file_data = load_Json_data()
-    if id_ not in file_data:
-        return HttpResponse(f"ERROR: Id-{id_} not found")
+    if request.method == "DELETE":
+        file_data = load_Json_data()
+        if id_ not in file_data:
+            return JsonResponse({"error":"ID not found"}, status=404)
 
 
-    del file_data[id_]
+        del file_data[id_]
 
-    with open(JSON_DIR, "w") as f:
-            json.dump(file_data, f, indent=4)
+        with open(JSON_DIR, "w") as f:
+                json.dump(file_data, f, indent=4)
 
-    return HttpResponse(f"Form deleted successfully! - {file_data.items()}")
+        return JsonResponse(file_data, status=204)
+    else:
+        return JsonResponse({"error":"Method Not Allowed"}, status=405)
 
         
 

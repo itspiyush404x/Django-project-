@@ -1,14 +1,7 @@
 {
     "1": {
         "name": "Piyush",
-        "age": 19
-    },
-    "2": {
-        "name": "Jatin",
-        "age": 21
-    },
-    "3": {
-        "name": "Akshat",
-        "age": 23
+        "age": 18,
+        "email": "piyush1234@gmail.com"
     }
 }
